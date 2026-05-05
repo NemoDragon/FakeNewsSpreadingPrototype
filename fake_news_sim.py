@@ -22,6 +22,20 @@ ROLE_INFLUENCER = "influencer"
 ROLE_FACT_CHECKER = "fact_checker"
 ROLE_BOT = "bot"
 
+ROLE_MARKERS = {
+    ROLE_REGULAR: "o",
+    ROLE_INFLUENCER: "^",
+    ROLE_FACT_CHECKER: "s",
+    ROLE_BOT: "X",
+}
+
+ROLE_LABELS = {
+    ROLE_REGULAR: "Regular user",
+    ROLE_INFLUENCER: "Influencer",
+    ROLE_FACT_CHECKER: "Fact-checker",
+    ROLE_BOT: "Bot",
+}
+
 
 @dataclass
 class AgentParams:
@@ -284,6 +298,7 @@ def plot_timeseries(susceptible: List[int], believer: List[int], informed: List[
 
 def plot_graph(model: FakeNewsModel) -> None:
     import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
 
     color_map = {
         STATE_SUSCEPTIBLE: "#9aa0a6",
@@ -292,14 +307,36 @@ def plot_graph(model: FakeNewsModel) -> None:
     }
 
     node_states = {agent.pos: agent.state for agent in model.agent_list}
-    node_colors = [color_map.get(node_states.get(n, STATE_SUSCEPTIBLE)) for n in model.graph.nodes]
+    node_roles = {agent.pos: agent.role for agent in model.agent_list}
 
     plt.figure(figsize=(8, 6))
     pos = nx.spring_layout(model.graph, seed=42)
     nx.draw_networkx_edges(model.graph, pos, alpha=0.15, width=0.6)
-    nx.draw_networkx_nodes(model.graph, pos, node_color=node_colors, node_size=40)
+    for role, marker in ROLE_MARKERS.items():
+        nodes = [node for node in model.graph.nodes if node_roles.get(node, ROLE_REGULAR) == role]
+        if not nodes:
+            continue
+        node_colors = [color_map.get(node_states.get(node, STATE_SUSCEPTIBLE)) for node in nodes]
+        nx.draw_networkx_nodes(
+            model.graph,
+            pos,
+            nodelist=nodes,
+            node_color=node_colors,
+            node_shape=marker,
+            node_size=60,
+        )
     plt.title("Social Graph (colored by state)")
     plt.axis("off")
+    role_handles = [
+        Line2D([0], [0], marker=marker, color="w", label=ROLE_LABELS[role], markerfacecolor="#444444", markersize=8)
+        for role, marker in ROLE_MARKERS.items()
+    ]
+    state_handles = [
+        Line2D([0], [0], marker="o", color="w", label="Susceptible", markerfacecolor=color_map[STATE_SUSCEPTIBLE], markersize=8),
+        Line2D([0], [0], marker="o", color="w", label="Believer", markerfacecolor=color_map[STATE_BELIEVER], markersize=8),
+        Line2D([0], [0], marker="o", color="w", label="Informed", markerfacecolor=color_map[STATE_INFORMED], markersize=8),
+    ]
+    plt.legend(handles=role_handles + state_handles, loc="upper left", fontsize=8)
 
 
 def animate_simulation(
@@ -342,21 +379,40 @@ def animate_simulation(
         ax_ts.legend()
 
     pos = nx.spring_layout(model.graph, seed=42)
-    graph_nodes = None
+    graph_nodes_by_role = {}
     graph_edges = None
+    role_handles = []
 
     if ax_graph is not None:
         ax_graph.set_title("Social Graph (colored by state)")
         ax_graph.axis("off")
         graph_edges = nx.draw_networkx_edges(model.graph, pos, ax=ax_graph, alpha=0.15, width=0.6)
-        node_colors = [color_map.get(STATE_SUSCEPTIBLE) for _ in model.graph.nodes]
-        graph_nodes = nx.draw_networkx_nodes(
-            model.graph,
-            pos,
-            ax=ax_graph,
-            node_color=node_colors,
-            node_size=40,
-        )
+        from matplotlib.lines import Line2D
+
+        for role, marker in ROLE_MARKERS.items():
+            nodes = [node for node in model.graph.nodes if next((agent.role for agent in model.agent_list if agent.pos == node), ROLE_REGULAR) == role]
+            if not nodes:
+                continue
+            node_colors = [color_map.get(STATE_SUSCEPTIBLE) for _ in nodes]
+            graph_nodes_by_role[role] = nx.draw_networkx_nodes(
+                model.graph,
+                pos,
+                ax=ax_graph,
+                nodelist=nodes,
+                node_color=node_colors,
+                node_shape=marker,
+                node_size=40,
+            )
+        role_handles = [
+            Line2D([0], [0], marker=marker, color="w", label=ROLE_LABELS[role], markerfacecolor="#444444", markersize=8)
+            for role, marker in ROLE_MARKERS.items()
+        ]
+        state_handles = [
+            Line2D([0], [0], marker="o", color="w", label="Susceptible", markerfacecolor=color_map[STATE_SUSCEPTIBLE], markersize=8),
+            Line2D([0], [0], marker="o", color="w", label="Believer", markerfacecolor=color_map[STATE_BELIEVER], markersize=8),
+            Line2D([0], [0], marker="o", color="w", label="Informed", markerfacecolor=color_map[STATE_INFORMED], markersize=8),
+        ]
+        ax_graph.legend(handles=role_handles + state_handles, loc="upper left", fontsize=7)
 
     def update(frame_index: int) -> Tuple[object, ...]:
         model.step()
@@ -374,13 +430,16 @@ def animate_simulation(
             ax_ts.set_ylim(0, model.num_agents)
             artists.extend([line_sus, line_bel, line_inf])
 
-        if graph_nodes is not None:
+        if graph_nodes_by_role:
             node_states = {agent.pos: agent.state for agent in model.agent_list}
-            node_colors = [color_map.get(node_states.get(n, STATE_SUSCEPTIBLE)) for n in model.graph.nodes]
-            graph_nodes.set_color(node_colors)
+            node_roles = {agent.pos: agent.role for agent in model.agent_list}
+            for role, collection in graph_nodes_by_role.items():
+                nodes = [node for node in model.graph.nodes if node_roles.get(node, ROLE_REGULAR) == role]
+                node_colors = [color_map.get(node_states.get(node, STATE_SUSCEPTIBLE)) for node in nodes]
+                collection.set_color(node_colors)
+                artists.append(collection)
             if graph_edges is not None:
                 artists.append(graph_edges)
-            artists.append(graph_nodes)
             if ax_graph is not None:
                 ax_graph.set_title(
                     f"Step {frame_index + 1} | S:{ts_susceptible[-1]} B:{ts_believer[-1]} I:{ts_informed[-1]}"
