@@ -83,6 +83,12 @@ $$
 x \sim \mathcal{U}(a, b)
 $$
 
+Mathematical pattern:
+
+$$
+t = 1, 2, \dots, N
+$$
+
 where $a$ and $b$ are the lower and upper bounds of the chosen range.
 
 The `trust` field is a dictionary indexed by source role:
@@ -303,19 +309,19 @@ Threshold pattern used here:
 State transitions can be written as:
 
 $$
-	ext{S} \to \text{B} \quad \text{if} \quad b \geq \theta_u
+  ext{S} \to \text{B} \quad \text{if} \quad b \geq \theta_u
 $$
 
 $$
-	ext{S} \to \text{I} \quad \text{if} \quad b \leq \theta_l
+  ext{S} \to \text{I} \quad \text{if} \quad b \leq \theta_l
 $$
 
 $$
-	ext{B} \to \text{I} \quad \text{if} \quad b \leq \theta_l
+  ext{B} \to \text{I} \quad \text{if} \quad b \leq \theta_l
 $$
 
 $$
-	ext{I} \to \text{B} \quad \text{if} \quad b \geq \theta_u
+  ext{I} \to \text{B} \quad \text{if} \quad b \geq \theta_u
 $$
 
 where $\theta_u$ is the upper threshold and $\theta_l$ is the lower threshold.
@@ -439,6 +445,14 @@ Parameter pattern:
 - `steps: int` controls how many ticks are simulated,
 - the remaining arguments are passed directly to `FakeNewsModel`.
 
+Mathematical pattern:
+
+$$
+t = 1, 2, \dots, N
+$$
+
+where $N$ is the number of simulation steps.
+
 Return pattern:
 
 - returns a tuple:
@@ -498,6 +512,14 @@ Behavior pattern:
 - larger degree means larger displayed node,
 - formula used: `40 + (degree ** 1.25) * 12`.
 
+Mathematical formula:
+
+$$
+s(d) = 40 + 12d^{1.25}
+$$
+
+where $d$ is the node degree and $s(d)$ is the rendered size.
+
 ### `node_sizes_for_graph(graph)`
 
 Purpose:
@@ -507,6 +529,14 @@ Purpose:
 Parameter pattern:
 
 - `graph: nx.Graph`
+
+Mathematical pattern:
+
+$$
+S = \{(v, s(v)) : v \in V\}
+$$
+
+where $V$ is the set of graph nodes.
 
 Return pattern:
 
@@ -525,6 +555,16 @@ Parameter pattern:
 - `show_graph: bool` toggles graph display,
 - `show_timeseries: bool` toggles a second panel with the line chart,
 - `interval_ms: int` controls frame delay in milliseconds.
+
+Mathematical pattern:
+
+The animation applies the same update rule repeatedly:
+
+$$
+\mathbf{x}_{t+1} = F(\mathbf{x}_t)
+$$
+
+where $\mathbf{x}_t$ is the full state at frame $t$ and $F$ is one call to `model.step()`.
 
 Behavior pattern:
 
@@ -599,6 +639,14 @@ There are two execution branches:
 - role -> shape,
 - state -> color,
 - degree -> size.
+
+Together, the rendering follows:
+
+$$
+  ext{marker} = M(\text{role}), \quad \text{color} = C(\text{state}), \quad \text{size} = s(d)
+$$
+
+where $M$ maps the role to a shape, $C$ maps the state to a color, and $s(d)$ maps degree to size.
 
 That combination makes the graph readable:
 
