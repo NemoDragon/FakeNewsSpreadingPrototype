@@ -1,0 +1,16 @@
+{
+  "run_timestamp": "20260522_165452",
+  "steps": 60,
+  "n_agents": 200,
+  "m_links": 3,
+  "influencer_ratio": 0.05,
+  "bot_ratio": 0.03,
+  "fact_checker_ratio": 0.03,
+  "seed": 42,
+  "news_csv": "fake_or_real_news.csv",
+  "animate": true,
+  "show_graph": true,
+  "show_timeseries": true,
+  "interval_ms": 200,
+  "classifier_weight": 0.3
+}
