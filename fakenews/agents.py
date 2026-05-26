@@ -125,6 +125,9 @@ class SocialAgent(Agent):
         weight = float(getattr(self.model, "classifier_weight", 0.0))
         if weight <= 0.0 or news_prediction is None:
             return
+        
+        if news_prediction.predicted_label == "REAL":
+            self.news_item = news_item
 
         direction = -1.0 if news_prediction.predicted_label == news_item.label.upper() else 1.0
         confidence = news_prediction.proba_fake if news_prediction.predicted_label == "FAKE" else 1.0 - news_prediction.proba_fake
