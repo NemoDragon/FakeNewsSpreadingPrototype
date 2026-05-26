@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 import networkx as nx
 from mesa import Model

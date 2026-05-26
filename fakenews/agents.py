@@ -130,11 +130,9 @@ class SocialAgent(Agent):
         if weight <= 0.0 or self.news_prediction is None:
             return
 
-        # Push belief based on classifier confidence: FAKE => higher belief, REAL => lower belief.
-        confidence = min(1.0, max(0.0, abs(self.news_prediction.proba_fake - 0.5) * 2.0))
-        direction = 1.0 if self.news_prediction.predicted_label == "FAKE" else -1.0
-        delta = weight * confidence * direction
-        self.params.belief = max(0.0, min(1.0, self.params.belief + delta))
+        direction = -1.0 if self.news_prediction.predicted_label == self.news_item.label.upper() else 1.0
+        confidence = self.news_prediction.proba_fake if self.news_prediction.predicted_label == "FAKE" else 1.0 - self.news_prediction.proba_fake
+        self.params.belief = max(0.0, min(1.0, self.params.belief + direction * weight * confidence))
 
     def _update_state(self) -> None:
         if self.state == STATE_BELIEVER and random.random() < self.params.forgetting_prob:
