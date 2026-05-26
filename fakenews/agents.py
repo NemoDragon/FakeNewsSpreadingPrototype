@@ -49,11 +49,6 @@ class SocialAgent(Agent):
 
         self.news_item: Optional[NewsItem] = news_item
         self.news_prediction: Optional[NewsPrediction] = None
-        self._refresh_news_prediction()
-
-    def _refresh_news_prediction(self) -> None:
-        classifier = getattr(self.model, "news_classifier", None)
-        self.news_prediction = predict_news(classifier, self.news_item)
 
     def step(self) -> None:
         if self.role == ROLE_BOT:
@@ -121,17 +116,18 @@ class SocialAgent(Agent):
 
         # Adopt the content (textual fake/real news) being propagated.
         if news_item is not None:
-            self.news_item = news_item
-            self._refresh_news_prediction()
-            self._apply_classifier_influence()
+            self._apply_classifier_influence(news_item)
 
-    def _apply_classifier_influence(self) -> None:
+    def _apply_classifier_influence(self, news_item: NewsItem) -> None:
+        classifier = getattr(self.model, "news_classifier", None)
+        news_prediction = predict_news(classifier, news_item)
+
         weight = float(getattr(self.model, "classifier_weight", 0.0))
-        if weight <= 0.0 or self.news_prediction is None:
+        if weight <= 0.0 or news_prediction is None:
             return
 
-        direction = -1.0 if self.news_prediction.predicted_label == self.news_item.label.upper() else 1.0
-        confidence = self.news_prediction.proba_fake if self.news_prediction.predicted_label == "FAKE" else 1.0 - self.news_prediction.proba_fake
+        direction = -1.0 if news_prediction.predicted_label == news_item.label.upper() else 1.0
+        confidence = news_prediction.proba_fake if news_prediction.predicted_label == "FAKE" else 1.0 - news_prediction.proba_fake
         if direction < 0 and self.params.belief > random.random() * confidence * self.params.competence * 4:
             direction *= -1.0
         self.params.belief = max(0.0, min(1.0, self.params.belief + direction * weight * confidence))
