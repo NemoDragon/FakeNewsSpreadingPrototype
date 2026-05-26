@@ -57,10 +57,19 @@ class FakeNewsModel(Model):
         self.news_classifier: Optional[FakeNewsClassifier] = None
         self.classifier_weight = max(0.0, float(classifier_weight))
         if news_dataset is not None and train_classifier:
+            self.train_dataset, self.test_dataset = self._split_dataset(news_dataset)
             self.news_classifier = FakeNewsClassifier()
-            self.news_classifier.train(news_dataset)
+            self.news_classifier.train(self.train_dataset)
 
         self._init_agents(influencer_ratio, bot_ratio, fact_checker_ratio)
+    
+    def _split_dataset(self, dataset: FakeNewsDataset, test_ratio: float = 0.1) -> Tuple[FakeNewsDataset, FakeNewsDataset]:
+        items = dataset.items
+        random.shuffle(items)
+        split_idx = int(len(items) * (1 - test_ratio))
+        train_items = items[:split_idx]
+        test_items = items[split_idx:]
+        return FakeNewsDataset(train_items), FakeNewsDataset(test_items)
 
     def _init_agents(self, influencer_ratio: float, bot_ratio: float, fact_checker_ratio: float) -> None:
         degrees = sorted(self.graph.degree, key=lambda x: x[1], reverse=True)
@@ -76,9 +85,9 @@ class FakeNewsModel(Model):
 
         fake_items: Sequence[NewsItem] = []
         real_items: Sequence[NewsItem] = []
-        if self.news_dataset is not None:
-            fake_items = self.news_dataset.filter_label("FAKE")
-            real_items = self.news_dataset.filter_label("REAL")
+        if self.test_dataset is not None:
+            fake_items = self.test_dataset.filter_label("FAKE")
+            real_items = self.test_dataset.filter_label("REAL")
 
         for node_id in self.graph.nodes:
             news_item: Optional[NewsItem] = None
