@@ -85,7 +85,7 @@ class FakeNewsClassifier:
         self._pipeline = Pipeline(
             steps=[
                 ("tfidf", TfidfVectorizer(stop_words="english", max_features=30000)),
-                ("clf", LogisticRegression(max_iter=1000)),
+                ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
             ]
         )
         self._pipeline.fit(texts, y)
