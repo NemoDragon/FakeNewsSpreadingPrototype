@@ -25,6 +25,7 @@ def run_simulation(
     news_csv: str | None = None,
     output_dir: str | Path = "results",
     classifier_weight: float = 0.0,
+    train_samples_per_agent: int = 0,
     animate: bool = True,
     show_graph: bool = True,
     show_timeseries: bool = False,
@@ -42,6 +43,7 @@ def run_simulation(
         news_dataset=dataset,
         train_classifier=True,
         classifier_weight=classifier_weight,
+        train_samples_per_agent=train_samples_per_agent,
     )
 
     recorder = SimulationResultsRecorder(output_dir=output_dir)
@@ -60,6 +62,7 @@ def run_simulation(
             "show_timeseries": show_timeseries,
             "interval_ms": interval_ms,
             "classifier_weight": classifier_weight,
+            "train_samples_per_agent": train_samples_per_agent,
         }
     )
 
@@ -118,6 +121,12 @@ if __name__ == "__main__":
         default=0.0,
         help="How strongly classifier nudges belief (0 disables influence)",
     )
+    parser.add_argument(
+        "--train-samples-per-agent",
+        type=int,
+        default=0,
+        help="If >0, train a separate classifier per agent on this many examples",
+    )
     args = parser.parse_args()
 
     run_simulation(
@@ -131,6 +140,7 @@ if __name__ == "__main__":
         news_csv=args.news_csv,
         output_dir=args.output_dir,
         classifier_weight=args.classifier_weight,
+        train_samples_per_agent=args.train_samples_per_agent,
         animate=not args.no_animate,
         show_graph=not args.no_graph,
         show_timeseries=args.timeseries,

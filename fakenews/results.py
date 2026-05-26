@@ -88,7 +88,8 @@ class SimulationResultsRecorder:
             "news_true_label": (news_item.label if news_item else None),
             "news_pred_label": (pred.predicted_label if pred else None),
             "news_pred_proba_fake": (pred.proba_fake if pred else None),
-            "classifier_trained": bool(getattr(model.news_classifier, "is_trained", False)) if model.news_classifier else False,
+            "model_classifier_trained": bool(getattr(model.news_classifier, "is_trained", False)) if model.news_classifier else False,
+            "agent_classifier_trained": bool(getattr(agent.news_classifier, "is_trained", False)) if getattr(agent, "news_classifier", None) else False,
         }
 
     def write_files(self) -> Dict[str, Path]:
