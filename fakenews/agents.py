@@ -165,8 +165,8 @@ class SocialAgent(Agent):
 
         direction = -1.0 if news_prediction.predicted_label == news_item.label.upper() else 1.0
         confidence = news_prediction.proba_fake if news_prediction.predicted_label == "FAKE" else 1.0 - news_prediction.proba_fake
-        if direction < 0 and self.params.belief > random.random() * confidence * self.params.competence * 4:
-            direction *= -1.0
+        # if direction < 0 and self.params.belief > random.random() * confidence * self.params.competence * 4:
+        #     direction *= -1.0
         self.params.belief = max(0.0, min(1.0, self.params.belief + direction * weight * confidence))
 
     def _update_state(self) -> None:
