@@ -210,10 +210,32 @@ def animate_simulation(
 
         return tuple(artists)
 
-    # Do one step immediately so the window does not look frozen.
+    # Show the initialized state at step 0 before the first simulation step.
+    initial_susceptible = model.count_state(STATE_SUSCEPTIBLE)
+    initial_believer = model.count_state(STATE_BELIEVER)
+    initial_informed = model.count_state(STATE_INFORMED)
+    if recorder is not None:
+        recorder.record_step(0, model)
+
+    ts_susceptible.append(initial_susceptible)
+    ts_believer.append(initial_believer)
+    ts_informed.append(initial_informed)
+
+    if ax_ts is not None and line_sus is not None and line_bel is not None and line_inf is not None:
+        x = list(range(len(ts_susceptible)))
+        line_sus.set_data(x, ts_susceptible)
+        line_bel.set_data(x, ts_believer)
+        line_inf.set_data(x, ts_informed)
+        ax_ts.set_xlim(0, max(10, len(ts_susceptible)))
+        ax_ts.set_ylim(0, model.num_agents)
+
+    if ax_graph is not None:
+        ax_graph.set_title(
+            f"Step 0 | S:{initial_susceptible} B:{initial_believer} I:{initial_informed}"
+        )
+
     if steps >= 1:
-        update(1)
-        frame_iter = range(2, steps + 1)
+        frame_iter = range(1, steps + 1)
     else:
         frame_iter = []
 
