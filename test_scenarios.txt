@@ -1,0 +1,81 @@
+14 Test Scenarios for Fake News Simulation
+
+Common Assumptions:
+- classifier is enabled in every scenario via --classifier-weight
+- graph and timeseries plot are visible via --timeseries
+- each scenario saves results to a separate directory in results\
+
+0. Baseline Scenario Without Classifier
+Goal: simulation using only mathematical model
+Command:
+python fake_news_sim.py --steps 60  --timeseries --output-dir results\00_baseline_math
+
+1. Baseline Scenario
+Goal: reference point for comparison with other variants.
+Command:
+python fake_news_sim.py --steps 60 --classifier-weight 1.0 --timeseries --output-dir results\01_baseline
+
+2. Small Network with Rapid Local Diffusion
+Goal: check model behavior with a small number of agents.
+Command:
+python fake_news_sim.py --agents 60 --steps 40 --m-links 2 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\02_small_network
+
+3. Large Network with Slower Collective Effects
+Goal: test scaling and stability with larger agent count.
+Command:
+python fake_news_sim.py --agents 500 --steps 80 --m-links 3 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\03_large_network
+
+4. Sparse Social Graph
+Goal: check if a small number of connections limits propagation.
+Command:
+python fake_news_sim.py --agents 200 --steps 60 --m-links 1 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\04_sparse_graph
+
+5. Dense Social Graph
+Goal: check if a larger number of connections accelerates influence spread.
+Command:
+python fake_news_sim.py --agents 200 --steps 60 --m-links 8 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\05_dense_graph
+
+6. High Share of Influencers
+Goal: test impact of strong central nodes on opinion dynamics.
+Command:
+python fake_news_sim.py --influencers 0.20 --bots 0.03 --fact-checkers 0.03 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\06_many_influencers
+
+7. No Influencers
+Goal: reference test without the role of influencers.
+Command:
+python fake_news_sim.py --influencers 0.0 --bots 0.03 --fact-checkers 0.03 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\07_no_influencers
+
+8. Strong Bot Activity
+Goal: check if a larger number of bots amplifies disinformation.
+Command:
+python fake_news_sim.py --bots 0.15 --influencers 0.05 --fact-checkers 0.03 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\08_many_bots
+
+9. No Bots
+Goal: test the model without an active source of false content.
+Command:
+python fake_news_sim.py --bots 0.0 --influencers 0.05 --fact-checkers 0.03 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\09_no_bots
+
+10. Strong Fact-Checkers
+Goal: check if stronger correction lowers the belief level.
+Command:
+python fake_news_sim.py --fact-checkers 0.15 --bots 0.03 --influencers 0.05 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\10_many_fact_checkers
+
+11. No Fact-Checkers
+Goal: scenario without a mechanism for information correction.
+Command:
+python fake_news_sim.py --fact-checkers 0.0 --bots 0.03 --influencers 0.05 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\11_no_fact_checkers
+
+12. Almost Everyone Susceptible at Start
+Goal: test how initial susceptibility to influence affects simulation progression.
+Command:
+python fake_news_sim.py --susceptible 0.95 --believer 0.03 --informed 0.02 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\12_mostly_susceptible
+
+13. Starting with High Share of Believers
+Goal: test scenario of an already partially polarized network.
+Command:
+python fake_news_sim.py --susceptible 0.40 --believer 0.50 --informed 0.10 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\13_many_believers_start
+
+14. Starting with High Share of Informed
+Goal: test scenario with clear corrective bias at start.
+Command:
+python fake_news_sim.py --susceptible 0.40 --believer 0.10 --informed 0.50 --classifier-weight 1.0 --timeseries --seed 42 --output-dir results\14_many_informed_start

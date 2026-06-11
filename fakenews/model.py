@@ -38,7 +38,7 @@ class FakeNewsModel(Model):
         news_dataset: Optional[FakeNewsDataset] = None,
         train_classifier: bool = True,
         classifier_weight: float = 0.0,
-        train_samples_per_agent: int = 0,
+        train_samples_per_agent: int = 10,
     ) -> None:
         super().__init__()
         random.seed(seed)

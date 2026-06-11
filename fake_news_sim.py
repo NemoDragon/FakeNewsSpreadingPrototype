@@ -140,7 +140,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train-samples-per-agent",
         type=int,
-        default=0,
+        default=10,
         help="If >0, train a separate classifier per agent on this many examples",
     )
     args = parser.parse_args()
