@@ -1,0 +1,76 @@
+14 scenariuszy testowych symulacji fake news
+
+Założenie wspólne:
+- klasyfikator jest włączony w każdym scenariuszu przez --classifier-weight
+- widoczny jest graf i wykres przez --timeseries
+- każdy scenariusz zapisuje wyniki do osobnego katalogu w results\
+
+1. Scenariusz bazowy
+Cel: punkt odniesienia do porównania z innymi wariantami.
+Komenda:
+python fake_news_sim.py --steps 60 --classifier-weight 0.10 --timeseries --output-dir results\01_baseline
+
+2. Mała sieć, szybka dyfuzja lokalna
+Cel: sprawdzenie zachowania modelu przy małej liczbie agentów.
+Komenda:
+python fake_news_sim.py --agents 60 --steps 40 --m-links 2 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\02_small_network
+
+3. Duża sieć, wolniejsze efekty zbiorowe
+Cel: test skalowania i stabilności przy większej liczbie agentów.
+Komenda:
+python fake_news_sim.py --agents 500 --steps 80 --m-links 3 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\03_large_network
+
+4. Rzadki graf społeczny
+Cel: sprawdzenie, czy mała liczba połączeń ogranicza propagację.
+Komenda:
+python fake_news_sim.py --agents 200 --steps 60 --m-links 1 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\04_sparse_graph
+
+5. Gęsty graf społeczny
+Cel: sprawdzenie, czy większa liczba połączeń przyspiesza rozchodzenie się wpływu.
+Komenda:
+python fake_news_sim.py --agents 200 --steps 60 --m-links 8 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\05_dense_graph
+
+6. Wysoki udział influencerów
+Cel: test wpływu silnych węzłów centralnych na dynamikę opinii.
+Komenda:
+python fake_news_sim.py --influencers 0.20 --bots 0.03 --fact-checkers 0.03 --classifier-weight 0.12 --timeseries --seed 42 --output-dir results\06_many_influencers
+
+7. Brak influencerów
+Cel: test referencyjny bez roli influencerów.
+Komenda:
+python fake_news_sim.py --influencers 0.0 --bots 0.03 --fact-checkers 0.03 --classifier-weight 0.12 --timeseries --seed 42 --output-dir results\07_no_influencers
+
+8. Silna aktywność botów
+Cel: sprawdzenie, czy większa liczba botów wzmacnia dezinformację.
+Komenda:
+python fake_news_sim.py --bots 0.15 --influencers 0.05 --fact-checkers 0.03 --classifier-weight 0.12 --timeseries --seed 42 --output-dir results\08_many_bots
+
+9. Brak botów
+Cel: test modelu bez aktywnego źródła fałszywych treści.
+Komenda:
+python fake_news_sim.py --bots 0.0 --influencers 0.05 --fact-checkers 0.03 --classifier-weight 0.12 --timeseries --seed 42 --output-dir results\09_no_bots
+
+10. Mocni fact-checkerzy
+Cel: sprawdzenie, czy silniejsza korekta obniża poziom belief.
+Komenda:
+python fake_news_sim.py --fact-checkers 0.15 --bots 0.03 --influencers 0.05 --classifier-weight 0.12 --timeseries --seed 42 --output-dir results\10_many_fact_checkers
+
+11. Brak fact-checkerów
+Cel: scenariusz bez mechanizmu korekty informacji.
+Komenda:
+python fake_news_sim.py --fact-checkers 0.0 --bots 0.03 --influencers 0.05 --classifier-weight 0.12 --timeseries --seed 42 --output-dir results\11_no_fact_checkers
+
+12. Prawie wszyscy podatni na wpływ na starcie
+Cel: test, jak początkowa podatność na wpływ zmienia przebieg symulacji.
+Komenda:
+python fake_news_sim.py --susceptible 0.95 --believer 0.03 --informed 0.02 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\12_mostly_susceptible
+
+13. Start z dużym udziałem believerów
+Cel: test scenariusza już częściowo spolaryzowanej sieci.
+Komenda:
+python fake_news_sim.py --susceptible 0.40 --believer 0.50 --informed 0.10 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\13_many_believers_start
+
+14. Start z dużym udziałem informed
+Cel: test scenariusza z wyraźnym nastawieniem korekcyjnym na starcie.
+Komenda:
+python fake_news_sim.py --susceptible 0.40 --believer 0.10 --informed 0.50 --classifier-weight 0.10 --timeseries --seed 42 --output-dir results\14_many_informed_start

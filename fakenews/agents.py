@@ -14,7 +14,7 @@ from .constants import (
     STATE_INFORMED,
     STATE_SUSCEPTIBLE,
 )
-from .news import NewsItem, NewsPrediction, predict_news
+from .news import FakeNewsClassifier, NewsItem, NewsPrediction, predict_news
 
 
 @dataclass
@@ -40,6 +40,7 @@ class SocialAgent(Agent):
         state: str,
         params: AgentParams,
         news_item: Optional[NewsItem] = None,
+        news_classifier: Optional[FakeNewsClassifier] = None,
     ) -> None:
         super().__init__(model)
         self.unique_id = unique_id
@@ -49,6 +50,11 @@ class SocialAgent(Agent):
 
         self.news_item: Optional[NewsItem] = news_item
         self.news_prediction: Optional[NewsPrediction] = None
+        self.news_classifier: Optional[FakeNewsClassifier] = news_classifier
+
+        # When an agent decides to forward a news item, do it in their own step.
+        # This avoids recursive broadcast cascades inside a single influence call.
+        self._pending_share_item: Optional[NewsItem] = None
 
     def step(self) -> None:
         if self.role == ROLE_BOT:
@@ -59,7 +65,19 @@ class SocialAgent(Agent):
             return
 
         self._interact_with_neighbors()
+        self._share_pending_news()
         self._update_state()
+
+    def _share_pending_news(self) -> None:
+        if self._pending_share_item is None:
+            return
+
+        item = self._pending_share_item
+        self._pending_share_item = None
+
+        # Minimal forwarding rule: if this agent currently believes the item is real
+        # (including FAKE items misclassified as REAL), share it with neighbors.
+        self._broadcast_influence(+self.model.believer_influence, source_role=self.role, news_item=item)
 
     def _bot_step(self) -> None:
         # Bots only push misinformation; they never change state.
@@ -119,11 +137,27 @@ class SocialAgent(Agent):
             self._apply_classifier_influence(news_item)
 
     def _apply_classifier_influence(self, news_item: NewsItem) -> None:
-        classifier = getattr(self.model, "news_classifier", None)
+        classifier = self.news_classifier or getattr(self.model, "news_classifier", None)
         news_prediction = predict_news(classifier, news_item)
 
+        # Store for results/plots even if weight==0.
+        self.news_prediction = news_prediction
+        if news_prediction is None:
+            return
+
+        # Forwarding rule for non-bot / non-fact-checker agents:
+        # - If the agent predicts the item as REAL, they forward it.
+        # - If the item is FAKE and correctly predicted as FAKE, they do not forward it.
+        if self.role not in {ROLE_BOT, ROLE_FACT_CHECKER}:
+            if news_prediction.predicted_label == "REAL":
+                self._pending_share_item = news_item
+            elif news_item.label.upper() == "FAKE" and news_prediction.predicted_label == "FAKE":
+                # Correctly recognized fake -> don't forward it.
+                if self._pending_share_item == news_item:
+                    self._pending_share_item = None
+
         weight = float(getattr(self.model, "classifier_weight", 0.0))
-        if weight <= 0.0 or news_prediction is None:
+        if weight <= 0.0:
             return
         
         if news_prediction.predicted_label == "REAL":
@@ -131,8 +165,8 @@ class SocialAgent(Agent):
 
         direction = -1.0 if news_prediction.predicted_label == news_item.label.upper() else 1.0
         confidence = news_prediction.proba_fake if news_prediction.predicted_label == "FAKE" else 1.0 - news_prediction.proba_fake
-        if direction < 0 and self.params.belief > random.random() * confidence * self.params.competence * 4:
-            direction *= -1.0
+        # if direction < 0 and self.params.belief > random.random() * confidence * self.params.competence * 4:
+        #     direction *= -1.0
         self.params.belief = max(0.0, min(1.0, self.params.belief + direction * weight * confidence))
 
     def _update_state(self) -> None:

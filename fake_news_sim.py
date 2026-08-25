@@ -21,10 +21,14 @@ def run_simulation(
     influencer_ratio: float = 0.05,
     bot_ratio: float = 0.03,
     fact_checker_ratio: float = 0.03,
+    susceptible_ratio: float = 1.0,
+    believer_ratio: float = 0.0,
+    informed_ratio: float = 0.0,
     seed: int = 42,
     news_csv: str | None = None,
     output_dir: str | Path = "results",
     classifier_weight: float = 0.0,
+    train_samples_per_agent: int = 0,
     animate: bool = True,
     show_graph: bool = True,
     show_timeseries: bool = False,
@@ -38,10 +42,14 @@ def run_simulation(
         influencer_ratio=influencer_ratio,
         bot_ratio=bot_ratio,
         fact_checker_ratio=fact_checker_ratio,
+        susceptible_ratio=susceptible_ratio,
+        believer_ratio=believer_ratio,
+        informed_ratio=informed_ratio,
         seed=seed,
         news_dataset=dataset,
         train_classifier=True,
         classifier_weight=classifier_weight,
+        train_samples_per_agent=train_samples_per_agent,
     )
 
     recorder = SimulationResultsRecorder(output_dir=output_dir)
@@ -53,6 +61,9 @@ def run_simulation(
             "influencer_ratio": influencer_ratio,
             "bot_ratio": bot_ratio,
             "fact_checker_ratio": fact_checker_ratio,
+            "susceptible_ratio": susceptible_ratio,
+            "believer_ratio": believer_ratio,
+            "informed_ratio": informed_ratio,
             "seed": seed,
             "news_csv": str(news_csv) if news_csv else None,
             "animate": animate,
@@ -60,6 +71,7 @@ def run_simulation(
             "show_timeseries": show_timeseries,
             "interval_ms": interval_ms,
             "classifier_weight": classifier_weight,
+            "train_samples_per_agent": train_samples_per_agent,
         }
     )
 
@@ -77,6 +89,10 @@ def run_simulation(
         susceptible: List[int] = []
         believer: List[int] = []
         informed: List[int] = []
+        recorder.record_step(0, model)
+        susceptible.append(model.count_state("susceptible"))
+        believer.append(model.count_state("believer"))
+        informed.append(model.count_state("informed"))
         for step in range(1, steps + 1):
             model.step()
             recorder.record_step(step, model)
@@ -105,6 +121,9 @@ if __name__ == "__main__":
     parser.add_argument("--influencers", type=float, default=0.05, help="Influencer ratio")
     parser.add_argument("--bots", type=float, default=0.03, help="Bot ratio")
     parser.add_argument("--fact-checkers", type=float, default=0.03, help="Fact-checker ratio")
+    parser.add_argument("--susceptible", type=float, default=1.0, help="Initial susceptible share for regular users and influencers")
+    parser.add_argument("--believer", type=float, default=0.0, help="Initial believer share for regular users and influencers")
+    parser.add_argument("--informed", type=float, default=0.0, help="Initial informed share for regular users and influencers")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-graph", action="store_true", help="Disable graph visualization")
     parser.add_argument("--no-animate", action="store_true", help="Disable animation and show static plots")
@@ -118,6 +137,12 @@ if __name__ == "__main__":
         default=0.0,
         help="How strongly classifier nudges belief (0 disables influence)",
     )
+    parser.add_argument(
+        "--train-samples-per-agent",
+        type=int,
+        default=10,
+        help="If >0, train a separate classifier per agent on this many examples",
+    )
     args = parser.parse_args()
 
     run_simulation(
@@ -127,10 +152,14 @@ if __name__ == "__main__":
         influencer_ratio=args.influencers,
         bot_ratio=args.bots,
         fact_checker_ratio=args.fact_checkers,
+        susceptible_ratio=args.susceptible,
+        believer_ratio=args.believer,
+        informed_ratio=args.informed,
         seed=args.seed,
         news_csv=args.news_csv,
         output_dir=args.output_dir,
         classifier_weight=args.classifier_weight,
+        train_samples_per_agent=args.train_samples_per_agent,
         animate=not args.no_animate,
         show_graph=not args.no_graph,
         show_timeseries=args.timeseries,
